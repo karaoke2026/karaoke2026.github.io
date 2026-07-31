@@ -1,156 +1,273 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>YouTube Video Info</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic YouTube Thumbnail & Lyrics Loader</title>
+    <style>
+        /* Base page styling */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #121212;
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px;
+            margin: 0;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
 
-<style>
-body{
-    font-family:Arial,Helvetica,sans-serif;
-    background:#f3f3f3;
-    margin:30px;
-}
+        .container {
+            width: 100%;
+            max-width: 800px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
 
-.container{
-    max-width:700px;
-    margin:auto;
-    background:#fff;
-    padding:20px;
-    border-radius:10px;
-    box-shadow:0 0 10px rgba(0,0,0,.15);
-}
+        .song-title {
+            font-size: 1.8rem;
+            margin: 0 0 20px 0;
+            color: #ffffff;
+        }
 
-input{
-    width:80%;
-    padding:10px;
-    font-size:16px;
-}
+        /* YouTube Thumbnail Styling */
+        .thumbnail-wrapper {
+            position: relative;
+            width: 100%;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+            margin-bottom: 30px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
 
-button{
-    padding:10px 18px;
-    font-size:16px;
-    cursor:pointer;
-}
+        .thumbnail-wrapper:hover {
+            transform: scale(1.02);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.8);
+        }
 
-img{
-    margin-top:20px;
-    width:100%;
-    max-width:480px;
-    border-radius:8px;
-}
+        .thumbnail-image {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
 
-.info{
-    margin-top:20px;
-    line-height:1.8;
-}
+        /* Play Button Overlay */
+        .play-icon {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 70px;
+            height: 50px;
+            background-color: rgba(33, 33, 33, 0.8);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.3s ease, transform 0.3s ease;
+        }
 
-label{
-    font-weight:bold;
-    color:#444;
-}
-</style>
+        .play-icon::before {
+            content: '';
+            display: block;
+            border-style: solid;
+            border-width: 12px 0 12px 20px;
+            border-color: transparent transparent transparent #ffffff;
+            margin-left: 6px;
+        }
+
+        .thumbnail-wrapper:hover .play-icon {
+            background-color: #ff0000;
+            transform: translate(-50%, -50%) scale(1.1);
+        }
+
+        /* Animated Button Styling */
+        .animated-btn {
+            position: relative;
+            display: inline-block;
+            min-width: 320px;
+            padding: 16px 36px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            color: #ffffff;
+            background: linear-gradient(135deg, #ff0055, #ff7c00);
+            border: none;
+            border-radius: 50px;
+            overflow: hidden; 
+            transition: background 0.4s ease, transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 0, 85, 0.4);
+            cursor: pointer;
+            margin-bottom: 30px;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .animated-btn:hover {
+            transform: translateY(-4px) scale(1.03);
+            box-shadow: 0 12px 25px rgba(255, 0, 85, 0.6);
+        }
+
+        .animated-btn:active {
+            transform: translateY(1px) scale(0.98);
+        }
+
+        .animated-btn.copied {
+            background: linear-gradient(135deg, #11998e, #38ef7d);
+            box-shadow: 0 4px 15px rgba(56, 239, 125, 0.4);
+        }
+
+        /* JavaScript Ripple Animation */
+        .animated-btn .ripple {
+            position: absolute;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.6);
+            transform: translate(-50%, -50%) scale(0);
+            animation: ripple-effect 0.6s linear;
+            pointer-events: none; 
+        }
+
+        @keyframes ripple-effect {
+            to {
+                transform: translate(-50%, -50%) scale(4);
+                opacity: 0;
+            }
+        }
+
+        /* Textarea Styling */
+        .lyrics-textarea {
+            width: 100%;
+            height: 220px;
+            padding: 18px 20px;
+            font-family: inherit;
+            font-size: 1rem;
+            line-height: 1.6;
+            color: #e0e0e0;
+            background-color: #1e1e1e;
+            border: 1px solid #333333;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            box-sizing: border-box;
+            resize: vertical;
+            outline: none;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .lyrics-textarea:focus {
+            border-color: #ff0055;
+            box-shadow: 0 0 15px rgba(255, 0, 85, 0.3);
+        }
+    </style>
 </head>
-
 <body>
 
-<div class="container">
+    <div class="container">
+        <!-- Displayed Song Title -->
+        <h1 class="song-title" id="songTitle">Loading Song...</h1>
 
-<h2>YouTube Video Information</h2>
+        <!-- Thumbnail Wrapper -->
+        <a id="videoLink" href="#" target="_blank" class="thumbnail-wrapper">
+            <img id="thumbnailImg" src="" alt="Video Thumbnail" class="thumbnail-image">
+            <div class="play-icon"></div>
+        </a>
 
-<input type="text"
-       id="videoId"
-       placeholder="Enter YouTube Video ID"
-       value="iQKFmL9uVGU">
+        <!-- Copy Button -->
+        <button class="animated-btn" id="copyBtn">
+            <span id="btnText">Click to copy the song lyrics below</span>
+        </button>
 
-<button onclick="loadVideo()">Load</button>
+        <!-- Lyrics Textarea Element -->
+        <textarea class="lyrics-textarea" id="lyricsInput" spellcheck="false" placeholder="Loading lyrics..."></textarea>
+    </div>
 
-<br>
+    <script>
+        // 1. Fetch JSON and Load Song Data asynchronously
+        async function loadSongFromURL() {
+            // Get raw query string (e.g., "?1" becomes "1", "?2" becomes "2")
+            let songId = window.location.search.substring(1);
 
-<img id="thumb">
+            if (songId.includes('id=')) {
+                const urlParams = new URLSearchParams(window.location.search);
+                songId = urlParams.get('id');
+            }
 
-<div class="info">
+            try {
+                // Fetch external JSON file
+                const response = await fetch('songs.json');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const songsDatabase = await response.json();
 
-<p><label>Title:</label> <span id="title"></span></p>
+                // Fallback to song ID "1" if parameter is missing or invalid
+                const currentSong = songsDatabase[songId] || songsDatabase["1"];
 
-<p><label>Channel:</label> <span id="channel"></span></p>
+                // Update UI Elements
+                document.getElementById('songTitle').textContent = currentSong.title;
+                document.getElementById('thumbnailImg').src = `https://img.youtube.com/vi/${currentSong.youtubeId}/maxresdefault.jpg`;
+                document.getElementById('videoLink').href = `https://www.youtube.com/watch?v=${currentSong.youtubeId}`;
+                document.getElementById('lyricsInput').value = currentSong.lyrics;
 
-<p><label>Views:</label> <span id="views"></span></p>
-
-<p><label>Published:</label> <span id="published"></span></p>
-
-<p><label>Description:</label></p>
-<div id="description"></div>
-
-</div>
-
-</div>
-
-<script>
-
-const API_KEY = "AIzaSyCE5Ok0e9IDA7_QoZNx16kSY63d5dDZj0Y";
-
-async function loadVideo(){
-
-    const videoId =
-        document.getElementById("videoId").value.trim();
-
-    if(videoId==""){
-        alert("Enter a Video ID");
-        return;
-    }
-
-    const url =
-    `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&id=${videoId}&key=${API_KEY}`;
-
-    try{
-
-        const response = await fetch(url);
-
-        const json = await response.json();
-
-        if(json.error){
-            alert(json.error.message);
-            return;
+            } catch (error) {
+                console.error('Error fetching songs.json:', error);
+                document.getElementById('songTitle').textContent = 'Unable to Load Song';
+                document.getElementById('lyricsInput').value = 'Failed to load lyrics from songs.json. Check browser console for errors.';
+            }
         }
 
-        if(json.items.length==0){
-            alert("Video not found.");
-            return;
-        }
+        // Initialize fetch operation on page load
+        loadSongFromURL();
 
-        const v = json.items[0];
+        // 2. Copy Button Handler
+        const copyBtn = document.getElementById('copyBtn');
+        const btnText = document.getElementById('btnText');
+        const lyricsInput = document.getElementById('lyricsInput');
+        
+        const originalText = "Click to copy the song lyrics below";
+        const copiedText = "✓ Song lyrics are copied!";
+        let resetTimeout;
 
-        document.getElementById("title").textContent =
-            v.snippet.title;
+        copyBtn.addEventListener('click', function(e) {
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(lyricsInput.value);
+            } else {
+                lyricsInput.select();
+                lyricsInput.setSelectionRange(0, 99999);
+                document.execCommand('copy');
+            }
 
-        document.getElementById("channel").textContent =
-            v.snippet.channelTitle;
+            btnText.textContent = copiedText;
+            copyBtn.classList.add('copied');
 
-        document.getElementById("views").textContent =
-            Number(v.statistics.viewCount).toLocaleString();
+            clearTimeout(resetTimeout);
+            resetTimeout = setTimeout(() => {
+                btnText.textContent = originalText;
+                copyBtn.classList.remove('copied');
+            }, 2500);
 
-        document.getElementById("published").textContent =
-            new Date(v.snippet.publishedAt).toLocaleDateString();
-
-        document.getElementById("description").textContent =
-            v.snippet.description;
-
-        document.getElementById("thumb").src =
-            v.snippet.thumbnails.high.url;
-
-    }
-    catch(err){
-        alert(err);
-    }
-
-}
-
-// Load sample video on page load
-loadVideo();
-
-</script>
+            // Ripple effect
+            const rect = e.currentTarget.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            const ripple = document.createElement('span');
+            ripple.classList.add('ripple');
+            ripple.style.left = `${x}px`;
+            ripple.style.top = `${y}px`;
+            
+            this.appendChild(ripple);
+            
+            setTimeout(() => {
+                ripple.remove();
+            }, 600); 
+        });
+    </script>
 
 </body>
 </html>
-
