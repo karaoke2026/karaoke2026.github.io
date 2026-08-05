@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Canvas Text External Proximity Engine</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0f172a, #1e293b);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            gap: 20px;
+        }
+
+        /* Control Panel Layout */
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            width: 100%;
+            max-width: 900px;
+        }
+
+        .btn {
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 14px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .reset-btn {
+            background-color: #ef4444;
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+        }
+
+        .reset-btn:hover {
+            background-color: #dc2626;
+            transform: translateY(-2px);
+        }
+
+        .load-btn {
+            background-color: #3b82f6;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .load-btn:hover {
+            background-color: #2563eb;
+            transform: translateY(-2px);
+        }
+
+        .canvas-container {
+            position: relative;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        canvas {
+            display: block;
+            background-color: #0b0f19;
+            cursor: crosshair;
+            user-select: none; 
+            -webkit-user-select: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="controls">
+        <button class="btn reset-btn" id="resetBtn">Reset Paint</button>
+        <button class="btn load-btn" id="loadTxtBtn">Load Text File</button>
+    </div>
+
+    <div class="canvas-container">
+        <canvas id="textCanvas" width="900" height="550"></canvas>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('textCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Control Hooks
+        const resetBtn = document.getElementById('resetBtn');
+        const loadTxtBtn = document.getElementById('loadTxtBtn');
+
+        // State Tracking Data Cache
+        let isDragging = false;
+        let characterPool = [];
+        let sourceLines = [];
+
+        // Global Structural Typography Rules
+        const fontPixelHeight = 32; 
+        const textFont = `bold ${fontPixelHeight}px "Segoe UI", Arial`;
+        const brushRadius = fontPixelHeight; 
+
+        // Process source strings down into distinct pixel character entries
+        function buildTextGraphicsEngine() {
+            characterPool = []; 
+            ctx.font = textFont;
+            
+            const lineSpacing = 65;
+            const totalLinesHeight = (sourceLines.length - 1) * lineSpacing;
+            
+            // Vertically center the block of text lines inside the canvas dynamically
+            const startY = (canvas.height / 2) - (totalLinesHeight / 2) + (fontPixelHeight / 3);
+
+            sourceLines.forEach((lineText, lineIndex) => {
+                const totalLineWidth = ctx.measureText(lineText).width;
+                let currentX = (canvas.width / 2) - (totalLineWidth / 2);
+                const targetY = startY + (lineIndex * lineSpacing);
+
+                for (let i = 0; i < lineText.length; i++) {
+                    const char = lineText[i];
+                    const charWidth = ctx.measureText(char).width;
+
+                    characterPool.push({
+                        char: char,
+                        x: currentX,
+                        y: targetY,
+                        centerX: currentX + (charWidth / 2),
+                        centerY: targetY - (fontPixelHeight / 2),
+                        colorWeight: 0.0 
+                    });
+
+                    currentX += charWidth;
+                }
+            });
+        }
+
+        // Fetch texts asynchronously from the external txt file
+        async function fetchExternalTextFile() {
+            try {
+                // Requests the local file over the web server pipeline
+                const response = await fetch('texts.txt');
+                
+                if (!response.ok) {
+                    throw new Error(`File access failed: ${response.status}`);
+                }
+                
+                const dataText = await response.text();
+                
+                // Split the document text cleanly by line break rules, filtering out empty rows
+                sourceLines = dataText.split(/\r?\n/).map(line => line.trim()).filter(line => line !== "");
+                
+                // Build the typography rendering engine coordinates
+                buildTextGraphicsEngine();
+                
+            } catch (error) {
+                console.error("Error reading file source:", error);
+                alert("Could not load texts.txt. Make sure you are using a local web server (e.g. Live Server) and both files are in the same folder.");
+            }
+        }
+
+        // Proximity calculation matching cursor radius footprint 
+        function applyGradientPaint(mouseX, mouseY) {
+            characterPool.forEach(item => {
+                if (item.colorWeight >= 1.0 || item.char === ' ') return;
+
+                const dx = mouseX - item.centerX;
+                const dy = mouseY - item.centerY;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+
+                if (distance <= brushRadius) {
+                    const proximityIntensity = 1.0 - (distance / brushRadius);
+
+                    if (proximityIntensity > item.colorWeight) {
+                        item.colorWeight = proximityIntensity;
+                    }
+                }
+            });
+        }
+
+        // Coordinate normalization helper
+        function getMousePos(e) {
+            const rect = canvas.getBoundingClientRect();
+            return {
+                x: e.clientX - rect.left,
+                y: e.clientY - rect.top
+            };
+        }
+
+        // Mouse Window Events Wireframe
+        canvas.addEventListener('mousedown', (e) => {
+            if (characterPool.length === 0) return;
+            isDragging = true;
+            const pos = getMousePos(e);
+            applyGradientPaint(pos.x, pos.y);
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            if (!isDragging || characterPool.length === 0) return;
+            const pos = getMousePos(e);
+            applyGradientPaint(pos.x, pos.y);
+        });
+
+        window.addEventListener('mouseup', () => { isDragging = false; });
+        window.addEventListener('mouseleave', () => { isDragging = false; });
+
+        // Reset Paint values but preserve total line entries
+        resetBtn.addEventListener('click', () => {
+            characterPool.forEach(item => item.colorWeight = 0.0);
+        });
+
+        // Event handler to load/reload file directly
+        loadTxtBtn.addEventListener('click', () => {
+            fetchExternalTextFile();
+        });
+
+        // RGB Interpolation Matrix Blend
+        function getBlendedColor(weight) {
+            const rStart = 71, gStart = 85, bStart = 105;   // Slate Grey Base
+            const rEnd = 0, gEnd = 255, bEnd = 0;           // Lime Green Active
+
+            const rCurrent = Math.round(rStart + (rEnd - rStart) * weight);
+            const gCurrent = Math.round(gStart + (gEnd - gStart) * weight);
+            const bCurrent = Math.round(bStart + (bEnd - bStart) * weight);
+
+            return `rgb(${rCurrent}, ${gCurrent}, ${bCurrent})`;
+        }
+
+        // Engine Loop
+        function renderLoop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            ctx.font = textFont;
+            ctx.textBaseline = 'alphabetic';
+            ctx.textAlign = 'left';
+
+            // If file hasn't been loaded yet, display a placeholder hint
+            if (characterPool.length === 0) {
+                ctx.fillStyle = '#64748b';
+                ctx.font = 'italic 20px "Segoe UI", Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText("Click 'Load Text File' to fetch data streams...", canvas.width / 2, canvas.height / 2);
+            } else {
+                characterPool.forEach(item => {
+                    ctx.fillStyle = getBlendedColor(item.colorWeight);
+                    ctx.fillText(item.char, item.x, item.y);
+                });
+            }
+
+            requestAnimationFrame(renderLoop);
+        }
+
+        // Start rendering structure
+        renderLoop();
+    </script>
+</body>
+</html>
