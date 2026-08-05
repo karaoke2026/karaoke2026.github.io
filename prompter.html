@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Canvas Grapheme Text Highlighter - Clear Memory System</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #09090e, #140b24);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow-y: auto;
+            gap: 20px;
+            padding: 40px 20px;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            max-width: 1200px;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 14px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .reset-btn {
+            background-color: #ff0055;
+            box-shadow: 0 4px 15px rgba(255, 0, 85, 0.4);
+        }
+
+        .reset-btn:hover {
+            background-color: #e6004c;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 0, 85, 0.6);
+        }
+
+        .clear-cache-btn {
+            background-color: #f97316;
+            box-shadow: 0 4px 15px rgba(249, 115, 22, 0.4);
+        }
+
+        .clear-cache-btn:hover {
+            background-color: #ea580c;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(249, 115, 22, 0.6);
+        }
+
+        .export-btn {
+            background-color: #10b981;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+        }
+
+        .export-btn:hover {
+            background-color: #059669;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.6);
+        }
+
+        .update-btn {
+            background-color: #00bfff;
+            box-shadow: 0 4px 15px rgba(0, 191, 255, 0.4);
+        }
+
+        .update-btn:hover {
+            background-color: #009acd;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 191, 255, 0.6);
+        }
+
+        /* Input Controls Layout Panel */
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 8px 14px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #fff;
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .color-picker {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            width: 32px;
+            height: 32px;
+            background-color: transparent;
+            border: none;
+            cursor: pointer;
+        }
+
+        .color-picker::-webkit-color-swatch {
+            border-radius: 6px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .color-picker::-moz-color-swatch {
+            border-radius: 6px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        /* Range Slider UI Customizations */
+        .font-slider {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 130px;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .font-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #00f3ff;
+            box-shadow: 0 0 8px rgba(0, 243, 255, 0.8);
+            transition: transform 0.1s;
+        }
+
+        .font-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        .size-display {
+            min-width: 32px;
+            color: #00f3ff;
+            text-align: right;
+        }
+
+        /* Input Container Layout */
+        .input-panel {
+            width: 100%;
+            max-width: 900px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .custom-textarea {
+            width: 100%;
+            height: 110px;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            padding: 12px 16px;
+            color: #f8fafc;
+            font-size: 15px;
+            line-height: 1.6;
+            resize: none;
+            outline: none;
+            font-family: inherit;
+            transition: border-color 0.2s ease;
+        }
+
+        .custom-textarea:focus {
+            border-color: #00bfff;
+        }
+
+        .canvas-container {
+            position: relative;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
+            border-radius: 16px;
+            overflow: hidden;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            transition: height 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        canvas {
+            display: block;
+            cursor: crosshair;
+            user-select: none; 
+            -webkit-user-select: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="controls">
+        <button class="btn reset-btn" id="resetBtn">Reset Paint</button>
+        <button class="btn clear-cache-btn" id="clearCacheBtn">Clear Memory Cache</button>
+        <button class="btn export-btn" id="exportBtn">Export Artwork</button>
+        
+        <div class="control-group">
+            <label for="fontSizeSlider">Font Size:</label>
+            <input type="range" id="fontSizeSlider" class="font-slider" min="16" max="60" value="32">
+            <span class="size-display" id="sizeDisplay">32px</span>
+        </div>
+
+        <div class="control-group">
+            <label for="baseColorPicker">Base Text:</label>
+            <input type="color" id="baseColorPicker" class="color-picker" value="#ff0077">
+        </div>
+
+        <div class="control-group">
+            <label for="highColorPicker">Highlight Text:</label>
+            <input type="color" id="highColorPicker" class="color-picker" value="#00f3ff">
+        </div>
+
+        <div class="control-group">
+            <label for="bgColorPicker">Canvas Bg:</label>
+            <input type="color" id="bgColorPicker" class="color-picker" value="#0b0914">
+        </div>
+    </div>
+
+    <div class="input-panel">
+        <textarea id="lyricsInput" class="custom-textarea" placeholder="Type or paste your custom Malayalam or English text lines here..."></textarea>
+        <button class="btn update-btn" id="updateTxtBtn">Update Text Lines</button>
+    </div>
+
+    <div class="canvas-container" id="canvasContainer">
+        <canvas id="textCanvas" width="900"></canvas>
+    </div>
+    <script>
+        const canvas = document.getElementById('textCanvas');
+        const canvasContainer = document.getElementById('canvasContainer');
+        const ctx = canvas.getContext('2d');
+        const resetBtn = document.getElementById('resetBtn');
+        const clearCacheBtn = document.getElementById('clearCacheBtn');
+        const exportBtn = document.getElementById('exportBtn');
+        
+        const fontSizeSlider = document.getElementById('fontSizeSlider');
+        const sizeDisplay = document.getElementById('sizeDisplay');
+        const baseColorPicker = document.getElementById('baseColorPicker');
+        const highColorPicker = document.getElementById('highColorPicker');
+        const bgColorPicker = document.getElementById('bgColorPicker');
+        const lyricsInput = document.getElementById('lyricsInput');
+        const updateTxtBtn = document.getElementById('updateTxtBtn');
+
+        const segmenter = new Intl.Segmenter('ml', { granularity: 'grapheme' });
+
+        // State Tracking variables
+        let isDragging = false;
+        let characterPool = [];
+        let mouseCoords = { x: -100, y: -100 };
+
+        // Factory Default Fallbacks System Properties
+        const defaultFactoryLines = [
+            "ചാഞ്ചാക്കം തെന്നിയും താളത്തിൽ ചിന്നിയും",
+            "ആകാശത്താലവട്ട പീലി കെട്ടും ചില്ലുമേഘമേ",
+            "ഉം ഉം ഉം ഉം...."
+        ];
+        const factoryFontSize = "32";
+        const factoryColorBase = "#ff0077";
+        const factoryColorHigh = "#00f3ff";
+        const factoryColorBg = "#0b0914";
+
+        // Memory Initialization Variable Anchors
+        let sourceLines = [];
+        let fontPixelHeight;
+        let textFont;
+        let brushRadius;
+        let defaultColor;
+        let activeColor;
+        let canvasBgColor;
+
+        // Fetch values from local persistence storage nodes or apply structural factory components
+        function loadApplicationState() {
+            let cachedLines = localStorage.getItem('canvas_lyrics');
+            sourceLines = cachedLines ? JSON.parse(cachedLines) : [...defaultFactoryLines];
+
+            fontSizeSlider.value = localStorage.getItem('canvas_font_size') || factoryFontSize;
+            baseColorPicker.value = localStorage.getItem('canvas_color_base') || factoryColorBase;
+            highColorPicker.value = localStorage.getItem('canvas_color_high') || factoryColorHigh;
+            bgColorPicker.value = localStorage.getItem('canvas_color_bg') || factoryColorBg;
+
+            // Synchronize execution fields
+            fontPixelHeight = parseInt(fontSizeSlider.value);
+            sizeDisplay.textContent = `${fontPixelHeight}px`;
+            textFont = `bold ${fontPixelHeight}px "Segoe UI", "Noto Sans Malayalam", Arial, sans-serif`;
+            brushRadius = Math.max(20, fontPixelHeight * 0.8);
+
+            defaultColor = baseColorPicker.value;    
+            activeColor = highColorPicker.value;    
+            canvasBgColor = bgColorPicker.value;
+
+            // Synchronize data output text row interface inputs
+            lyricsInput.value = sourceLines.join('\n');
+        }
+
+        function updateTextGeometry(preservePaintState = false) {
+            ctx.font = textFont;
+            
+            const lineSpacing = fontPixelHeight + 35;
+            const topPadding = 60;
+            const bottomPadding = 60;
+            
+            const totalContentHeight = (sourceLines.length * lineSpacing) - lineSpacing;
+            const computedCanvasHeight = totalContentHeight + topPadding + bottomPadding;
+            const targetCanvasHeight = Math.max(450, computedCanvasHeight);
+
+            canvas.height = targetCanvasHeight;
+            canvasContainer.style.height = `${targetCanvasHeight}px`;
+
+            ctx.font = textFont;
+
+            const startY = (canvas.height / 2) - (totalContentHeight / 2) + (fontPixelHeight / 3);
+
+            const stateCache = {};
+            if (preservePaintState) {
+                characterPool.forEach((item, index) => {
+                    stateCache[index] = item.isChanged;
+                });
+            }
+
+            characterPool = []; 
+            let charGlobalIndex = 0;
+
+            sourceLines.forEach((lineText, lineIndex) => {
+                const segments = Array.from(segmenter.segment(lineText)).map(s => s.segment);
+                
+                let totalLineWidth = 0;
+                segments.forEach(glyph => {
+                    totalLineWidth += ctx.measureText(glyph).width;
+                });
+
+                let currentX = (canvas.width / 2) - (totalLineWidth / 2);
+                const targetY = startY + (lineIndex * lineSpacing);
+
+                segments.forEach(glyph => {
+                    const charWidth = ctx.measureText(glyph).width;
+                    const centerAnchorX = currentX + (charWidth / 2);
+                    const centerAnchorY = targetY - (fontPixelHeight / 2);
+
+                    characterPool.push({
+                        char: glyph, 
+                        x: currentX,
+                        y: targetY,
+                        centerX: centerAnchorX,
+                        centerY: centerAnchorY,
+                        isChanged: stateCache[charGlobalIndex] || false
+                    });
+
+                    currentX += charWidth;
+                    charGlobalIndex++;
+                });
+            });
+        }
+        function checkRadiusCollision(mouseX, mouseY) {
+            characterPool.forEach(item => {
+                if (item.isChanged || item.char === ' ' || item.char === '.') return;
+
+                const dx = mouseX - item.centerX;
+                const dy = mouseY - item.centerY;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+
+                if (distance <= brushRadius) {
+                    item.isChanged = true;
+                }
+            });
+        }
+
+        function getMousePos(e) {
+            const rect = canvas.getBoundingClientRect();
+            return {
+                x: e.clientX - rect.left,
+                y: e.clientY - rect.top
+            };
+        }
+
+        // Input Bindings
+        canvas.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            mouseCoords = getMousePos(e);
+            checkRadiusCollision(mouseCoords.x, mouseCoords.y);
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            mouseCoords = getMousePos(e); 
+            if (!isDragging) return;
+            checkRadiusCollision(mouseCoords.x, mouseCoords.y);
+        });
+
+        window.addEventListener('mouseup', () => { isDragging = false; });
+        canvas.addEventListener('mouseleave', () => {
+            isDragging = false;
+            mouseCoords = { x: -100, y: -100 };
+        });
+
+        resetBtn.addEventListener('click', () => {
+            characterPool.forEach(item => item.isChanged = false);
+        });
+
+        // Wipes database entry items entirely and returns elements to initial defaults
+        clearCacheBtn.addEventListener('click', () => {
+            if (confirm("Are you sure you want to clear your saved text lines and color configurations?")) {
+                localStorage.removeItem('canvas_lyrics');
+                localStorage.removeItem('canvas_font_size');
+                localStorage.removeItem('canvas_color_base');
+                localStorage.removeItem('canvas_color_high');
+                localStorage.removeItem('canvas_color_bg');
+                
+                loadApplicationState();
+                updateTextGeometry(false);
+            }
+        });
+
+        exportBtn.addEventListener('click', () => {
+            renderFrame();
+            const imageURL = canvas.toDataURL("image/png");
+            const downloadLink = document.createElement('a');
+            downloadLink.href = imageURL;
+            downloadLink.download = `lyric-sheet-${Date.now()}.png`;
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+        });
+
+        updateTxtBtn.addEventListener('click', () => {
+            const cleanRawInput = lyricsInput.value;
+            sourceLines = cleanRawInput.split(/\r?\n/).map(l => l.trim()).filter(l => l !== "");
+            
+            localStorage.setItem('canvas_lyrics', JSON.stringify(sourceLines));
+            updateTextGeometry(false);
+        });
+
+        fontSizeSlider.addEventListener('input', (e) => {
+            fontPixelHeight = parseInt(e.target.value);
+            sizeDisplay.textContent = `${fontPixelHeight}px`;
+            textFont = `bold ${fontPixelHeight}px "Segoe UI", "Noto Sans Malayalam", Arial, sans-serif`;
+            
+            brushRadius = Math.max(20, fontPixelHeight * 0.8);
+            
+            localStorage.setItem('canvas_font_size', fontPixelHeight.toString());
+            updateTextGeometry(true); 
+        });
+
+        baseColorPicker.addEventListener('input', (e) => { 
+            defaultColor = e.target.value; 
+            localStorage.setItem('canvas_color_base', defaultColor);
+        });
+        highColorPicker.addEventListener('input', (e) => { 
+            activeColor = e.target.value; 
+            localStorage.setItem('canvas_color_high', activeColor);
+        });
+        bgColorPicker.addEventListener('input', (e) => { 
+            canvasBgColor = e.target.value; 
+            localStorage.setItem('canvas_color_bg', canvasBgColor);
+        });
+
+        function renderFrame() {
+            ctx.fillStyle = canvasBgColor;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.font = textFont;
+            ctx.textBaseline = 'alphabetic';
+            ctx.textAlign = 'left';
+
+            characterPool.forEach(item => {
+                ctx.fillStyle = item.isChanged ? activeColor : defaultColor;
+                ctx.fillText(item.char, item.x, item.y);
+            });
+        }
+
+        function renderLoop() {
+            renderFrame();
+            requestAnimationFrame(renderLoop);
+        }
+
+        // Run application setup
+        loadApplicationState();
+        updateTextGeometry(false);
+        renderLoop();
+    </script>
+</body>
+</html>
