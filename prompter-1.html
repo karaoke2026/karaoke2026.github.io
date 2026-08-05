@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Canvas Text JSON Proximity Engine</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0f172a, #1e293b);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            gap: 20px;
+        }
+
+        /* Control Panel Layout */
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            width: 100%;
+            max-width: 900px;
+        }
+
+        .btn {
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 14px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .reset-btn {
+            background-color: #ef4444;
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+        }
+
+        .reset-btn:hover {
+            background-color: #dc2626;
+            transform: translateY(-2px);
+        }
+
+        .load-btn {
+            background-color: #3b82f6;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .load-btn:hover {
+            background-color: #2563eb;
+            transform: translateY(-2px);
+        }
+
+        .canvas-container {
+            position: relative;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        canvas {
+            display: block;
+            background-color: #0b0f19;
+            cursor: crosshair;
+            user-select: none; 
+            -webkit-user-select: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="controls">
+        <button class="btn reset-btn" id="resetBtn">Reset Paint</button>
+        <button class="btn load-btn" id="loadTxtBtn">Reload JSON Config</button>
+    </div>
+
+    <div class="canvas-container">
+        <canvas id="textCanvas" width="900" height="550"></canvas>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('textCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Control Hooks
+        const resetBtn = document.getElementById('resetBtn');
+        const loadTxtBtn = document.getElementById('loadTxtBtn');
+
+        // State Tracking Data Cache
+        let isDragging = false;
+        let characterPool = [];
+        let sourceLines = [];
+
+        // Global Structural Typography Rules
+        const fontPixelHeight = 32; 
+        const textFont = `bold ${fontPixelHeight}px "Segoe UI", Arial`;
+        const brushRadius = fontPixelHeight; 
+
+        // Process active string array elements into layout object models
+        function buildTextGraphicsEngine() {
+            characterPool = []; 
+            ctx.font = textFont;
+            
+            const lineSpacing = 65;
+            const totalLinesHeight = (sourceLines.length - 1) * lineSpacing;
+            const startY = (canvas.height / 2) - (totalLinesHeight / 2) + (fontPixelHeight / 3);
+
+            sourceLines.forEach((lineText, lineIndex) => {
+                const totalLineWidth = ctx.measureText(lineText).width;
+                let currentX = (canvas.width / 2) - (totalLineWidth / 2);
+                const targetY = startY + (lineIndex * lineSpacing);
+
+                for (let i = 0; i < lineText.length; i++) {
+                    const char = lineText[i];
+                    const charWidth = ctx.measureText(char).width;
+
+                    characterPool.push({
+                        char: char,
+                        x: currentX,
+                        y: targetY,
+                        centerX: currentX + (charWidth / 2),
+                        centerY: targetY - (fontPixelHeight / 2),
+                        colorWeight: 0.0 
+                    });
+
+                    currentX += charWidth;
+                }
+            });
+        }
+
+        // Target and unpack remote JSON structure values
+        async function fetchExternalJSONFile() {
+            try {
+                // Connects directly using your global project path parameters 
+                const targetURL = 'https://github.io';
+                const response = await fetch(targetURL);
+                
+                if (!response.ok) {
+                    throw new Error(`Server request issue: ${response.status}`);
+                }
+                
+                const configData = await response.json();
+                
+                // Read lines out from JSON block property array mapping
+                if (configData && Array.isArray(configData.lines)) {
+                    sourceLines = configData.lines.map(str => str.trim()).filter(str => str !== "");
+                    buildTextGraphicsEngine();
+                } else {
+                    throw new Error("JSON document misses structured lines matrix array format block properties.");
+                }
+                
+            } catch (error) {
+                console.error("Failed to parse file configuration settings:", error);
+                alert("Could not pull content stream records safely from text.json. Please make sure file formatting is correct.");
+            }
+        }
+
+        // Proximity calculation matching cursor radius footprint 
+        function applyGradientPaint(mouseX, mouseY) {
+            characterPool.forEach(item => {
+                if (item.colorWeight >= 1.0 || item.char === ' ') return;
+
+                const dx = mouseX - item.centerX;
+                const dy = mouseY - item.centerY;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+
+                if (distance <= brushRadius) {
+                    const proximityIntensity = 1.0 - (distance / brushRadius);
+
+                    if (proximityIntensity > item.colorWeight) {
+                        item.colorWeight = proximityIntensity;
+                    }
+                }
+            });
+        }
+
+        // Coordinate normalization helper
+        function getMousePos(e) {
+            const rect = canvas.getBoundingClientRect();
+            return {
+                x: e.clientX - rect.left,
+                y: e.clientY - rect.top
+            };
+        }
+
+        // Input Trigger Listeners
+        canvas.addEventListener('mousedown', (e) => {
+            if (characterPool.length === 0) return;
+            isDragging = true;
+            const pos = getMousePos(e);
+            applyGradientPaint(pos.x, pos.y);
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            if (!isDragging || characterPool.length === 0) return;
+            const pos = getMousePos(e);
+            applyGradientPaint(pos.x, pos.y);
+        });
+
+        window.addEventListener('mouseup', () => { isDragging = false; });
+        window.addEventListener('mouseleave', () => { isDragging = false; });
+
+        // Wipe color coordinates but save active array tracks
+        resetBtn.addEventListener('click', () => {
+            characterPool.forEach(item => item.colorWeight = 0.0);
+        });
+
+        // Setup manual reload access framework
+        loadTxtBtn.addEventListener('click', () => {
+            fetchExternalJSONFile();
+        });
+
+        // RGB Interpolation Matrix Blend
+        function getBlendedColor(weight) {
+            const rStart = 71, gStart = 85, bStart = 105;   
+            const rEnd = 0, gEnd = 255, bEnd = 0;           
+
+            const rCurrent = Math.round(rStart + (rEnd - rStart) * weight);
+            const gCurrent = Math.round(gStart + (gEnd - gStart) * weight);
+            const bCurrent = Math.round(bStart + (bEnd - bStart) * weight);
+
+            return `rgb(${rCurrent}, ${gCurrent}, ${bCurrent})`;
+        }
+
+        // Main Rendering Loop
+        function renderLoop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            ctx.font = textFont;
+            ctx.textBaseline = 'alphabetic';
+            ctx.textAlign = 'left';
+
+            if (characterPool.length === 0) {
+                ctx.fillStyle = '#64748b';
+                ctx.font = 'italic 20px "Segoe UI", Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText("Connecting to karaoke2026.github.io config stream...", canvas.width / 2, canvas.height / 2);
+            } else {
+                characterPool.forEach(item => {
+                    ctx.fillStyle = getBlendedColor(item.colorWeight);
+                    ctx.fillText(item.char, item.x, item.y);
+                });
+            }
+
+            requestAnimationFrame(renderLoop);
+        }
+
+        // Auto-run connection script on initial window load sequence
+        fetchExternalJSONFile();
+        renderLoop();
+    </script>
+</body>
+</html>
