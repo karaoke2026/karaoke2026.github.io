@@ -146,27 +146,35 @@
         // Target and unpack remote JSON structure values
         async function fetchExternalJSONFile() {
             try {
-                // Connects directly using your global project path parameters 
                 const targetURL = 'https://github.io';
                 const response = await fetch(targetURL);
                 
+                // Catch Server errors explicitly (like 404 Not Found)
                 if (!response.ok) {
-                    throw new Error(`Server request issue: ${response.status}`);
+                    throw new Error(`HTTP Network Error! Status: ${response.status} (${response.statusText})`);
                 }
                 
-                const configData = await response.json();
+                let configData;
+                try {
+                    configData = await response.json();
+                } catch (jsonParseError) {
+                    // Triggers if file exists but syntax formatting inside is broken
+                    throw new Error(`Invalid JSON syntax formatting!\nDetails: ${jsonParseError.message}`);
+                }
                 
-                // Read lines out from JSON block property array mapping
+                // Validate parsed formatting structure keys
                 if (configData && Array.isArray(configData.lines)) {
                     sourceLines = configData.lines.map(str => str.trim()).filter(str => str !== "");
                     buildTextGraphicsEngine();
                 } else {
-                    throw new Error("JSON document misses structured lines matrix array format block properties.");
+                    throw new Error("JSON structure validation failed! Missing a root 'lines' array.");
                 }
                 
             } catch (error) {
-                console.error("Failed to parse file configuration settings:", error);
-                alert("Could not pull content stream records safely from text.json. Please make sure file formatting is correct.");
+                console.error("Detailed Debug Output:", error);
+                
+                // Outputs the customized descriptive error strings inside the browser window alert panel
+                alert(`Configuration Load Failed!\n\n[Error Details]:\n${error.message}\n\nPlease check your text.json file syntax or network connectivity.`);
             }
         }
 
