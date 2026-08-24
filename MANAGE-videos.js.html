@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>videos.js Object Generator</title>
+
+<style>
+    * {
+        box-sizing: border-box;
+    }
+
+    body {
+        margin: 0;
+        padding: 20px;
+        font-family: Arial, sans-serif;
+        background: #f2f2f2;
+        color: #222;
+    }
+
+    .container {
+        max-width: 1000px;
+        margin: auto;
+        background: white;
+        padding: 25px;
+        border-radius: 12px;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.15);
+    }
+
+    h2 {
+        text-align: center;
+        margin-top: 0;
+        color: #1976d2;
+    }
+
+    label {
+        display: block;
+        font-weight: bold;
+        margin-top: 18px;
+        margin-bottom: 6px;
+    }
+
+    input,
+    textarea {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid #bbb;
+        border-radius: 6px;
+        font-size: 16px;
+        font-family: Arial, sans-serif;
+    }
+
+    textarea {
+        min-height: 140px;
+        resize: vertical;
+        line-height: 1.5;
+    }
+
+    #output {
+        min-height: 180px;
+        background: #f7f7f7;
+        font-family: Consolas, monospace;
+    }
+
+    .buttons {
+        display: flex;
+        gap: 10px;
+        margin-top: 20px;
+        flex-wrap: wrap;
+    }
+
+    button {
+        padding: 12px 20px;
+        border: none;
+        border-radius: 6px;
+        font-size: 16px;
+        cursor: pointer;
+        color: white;
+    }
+
+    .generate {
+        background: #1976d2;
+    }
+
+    .generate:hover {
+        background: #125aa0;
+    }
+
+    .copy {
+        background: #388e3c;
+    }
+
+    .copy:hover {
+        background: #256428;
+    }
+
+    .clear {
+        background: #777;
+    }
+
+    .clear:hover {
+        background: #555;
+    }
+
+    #status {
+        margin-top: 12px;
+        color: #388e3c;
+        font-weight: bold;
+    }
+
+    .hint {
+        font-size: 14px;
+        color: #666;
+        margin-top: 5px;
+    }
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h2>videos.js Object Generator</h2>
+
+    <!-- TITLE -->
+    <label for="title">Title</label>
+    <input
+        type="text"
+        id="title"
+        placeholder="Example: chanjakkm"
+    >
+
+    <!-- VIDEO ID -->
+    <label for="videoId">Video ID</label>
+    <input
+        type="text"
+        id="videoId"
+        placeholder="Example: AuX5ZVYAOQs"
+    >
+
+    <!-- IFRAME -->
+    <label for="iframe">YouTube Iframe Code</label>
+    <textarea
+        id="iframe"
+        placeholder='Paste your YouTube iframe code here...'
+    ></textarea>
+
+    <div class="hint">
+        Double quotes inside the iframe will automatically be changed to single quotes.
+    </div>
+
+    <!-- BUTTONS -->
+    <div class="buttons">
+        <button class="generate" onclick="generateObject()">
+            Generate
+        </button>
+
+        <button class="copy" onclick="copyOutput()">
+            Copy Output
+        </button>
+
+        <button class="clear" onclick="clearAll()">
+            Clear
+        </button>
+    </div>
+
+    <!-- OUTPUT -->
+    <label for="output">Generated Object</label>
+
+    <textarea
+        id="output"
+        readonly
+        placeholder="Generated videos.js object will appear here..."
+    ></textarea>
+
+    <div id="status"></div>
+
+</div>
+
+
+<script>
+
+function generateObject() {
+
+    const title = document.getElementById("title").value;
+    const videoId = document.getElementById("videoId").value;
+    let iframe = document.getElementById("iframe").value;
+
+    // Convert all double quotes to single quotes
+    // ONLY inside the iframe field
+    iframe = iframe.replace(/"/g, "'");
+
+    // Generate final object
+    const result =
+        '{ title: "' +
+        title.replace(/"/g, '\\"') +
+        '", videoId: "' +
+        videoId.replace(/"/g, '\\"') +
+        '", fId: "' +
+        iframe.replace(/\\/g, '\\\\').replace(/"/g, '\\"') +
+        '" }';
+
+    document.getElementById("output").value = result;
+
+    document.getElementById("status").textContent =
+        "Object generated successfully.";
+}
+
+
+function copyOutput() {
+
+    const output = document.getElementById("output");
+
+    if (!output.value) {
+        generateObject();
+    }
+
+    output.select();
+    output.setSelectionRange(0, 99999);
+
+    navigator.clipboard.writeText(output.value)
+        .then(function() {
+
+            document.getElementById("status").textContent =
+                "Copied to clipboard!";
+
+        })
+        .catch(function() {
+
+            document.execCommand("copy");
+
+            document.getElementById("status").textContent =
+                "Copied to clipboard!";
+
+        });
+}
+
+
+function clearAll() {
+
+    document.getElementById("title").value = "";
+    document.getElementById("videoId").value = "";
+    document.getElementById("iframe").value = "";
+    document.getElementById("output").value = "";
+
+    document.getElementById("status").textContent = "";
+}
+
+</script>
+
+</body>
+</html>
