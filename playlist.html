@@ -83,18 +83,18 @@
                 <div class="item-details"><div class="item-title">${video.title}</div></div>
             `;
             
-            item.onclick = () => playVideo(video.videoId, video.title, item);
+            item.onclick = () => playVideo(video.videoId, video.title, video.sID, item);
             container.appendChild(item);
 
             // Autoplays or pre-loads the very first song on start
-            if(index === 0) playVideo(video.videoId, video.title, item);
+            if(index === 0) playVideo(video.videoId, video.title, video.sID, item);
         });
     }
 
-    function playVideo(id, title, element) {
+    function playVideo(id, title, sid, element) {
         // Fixed String Interpolation using Backticks and Dollar Sign
  
- document.getElementById('youtube-player').innerHTML ='<iframe width="560" height="315" src="https://www.youtube.com/embed/uh37Kubhd64?si=hX7wpfh1uSS9ZcYg" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>';
+ document.getElementById('youtube-player').innerHTML ='<iframe width="560" height="315" src="https://www.youtube.com/embed/$[id]?si=$[sid]" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>';
         document.getElementById('player-title').innerText = title;
         
         document.querySelectorAll('.playlist-item').forEach(el => el.classList.remove('active'));
