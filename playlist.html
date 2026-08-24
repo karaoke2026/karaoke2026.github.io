@@ -37,16 +37,9 @@
 <div class="container">
     <!-- Left Column -->
     <div class="main-player">
-        <div class="video-wrapper">
+        <div class="video-wrapper" id="youtube-player">
           
-       
-	   
-	   <iframe id="youtube-player"  src="" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
-	   
-
-
-
-
+  
 
 	   </div>
         <div class="video-title" id="player-title">Select a video to start singing...</div>
@@ -100,8 +93,8 @@
 
     function playVideo(id, title, element) {
         // Fixed String Interpolation using Backticks and Dollar Sign
-		// https://www.youtube.com/embed/uh37Kubhd64?si=UEGNM4bPqjSoKGkM
-        document.getElementById('youtube-player').src='https://www.youtube.com/embed/${id}?si=${sID}';
+ 
+ document.getElementById('youtube-player').innerHTML ='<iframe width="560" height="315" src="https://www.youtube.com/embed/uh37Kubhd64?si=hX7wpfh1uSS9ZcYg" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>';
         document.getElementById('player-title').innerText = title;
         
         document.querySelectorAll('.playlist-item').forEach(el => el.classList.remove('active'));
@@ -110,10 +103,6 @@
 
     loadPlaylist();
 </script>
-
-
-<iframe width="560" height="315" src="https://www.youtube.com/embed/uh37Kubhd64?si=CTbejFvyb_9XFMDR" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
-
 
 
 
