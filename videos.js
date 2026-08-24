@@ -1,5 +1,5 @@
 const myVideos = [
     // Correct format (Only the 11 characters after watch?v=)
-    { title: "Malayalam karaoke on Instagram/Twitter", videoId: "dQw4w9WgXcQ" },
-    { title: "krishna", videoId: "U_azQxGbplU" }
+        { title: "IN  Skip navigation Search    Create   Avatar image How to Apply two Rotoscoping Mask to a single clip", videoId: "GbzPooeGYeU" },
+      { title: "How to use SPOT REMOVER Effect in Kdenlive", videoId: "9I6LAy-7cdo" },
 ];

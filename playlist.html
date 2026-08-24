@@ -38,8 +38,17 @@
     <!-- Left Column -->
     <div class="main-player">
         <div class="video-wrapper">
-            <iframe id="youtube-player" src="" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-        </div>
+          
+       
+	   
+	   <iframe id="youtube-player"  src="" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+	   
+
+
+
+
+
+	   </div>
         <div class="video-title" id="player-title">Select a video to start singing...</div>
     </div>
 
@@ -66,8 +75,16 @@
         myVideos.forEach((video, index) => {
             const item = document.createElement('div');
             item.className = `playlist-item ${index === 0 ? 'active' : ''}`;
-            const thumbUrl = `https://youtube.com{video.videoId}/mqdefault.jpg`;
             
+            // Fixed String Interpolation for the Thumbnail URL
+            const thumbUrl = `https://img.youtube.com/vi/${video.videoId}/mqdefault.jpg`;
+            
+			
+			
+			// https://img.youtube.com/vi/u4Um49oQEL0/mqdefault.jpg
+			
+			
+			
             item.innerHTML = `
                 <div class="thumb-wrapper"><img src="${thumbUrl}" alt="thumbnail"></div>
                 <div class="item-details"><div class="item-title">${video.title}</div></div>
@@ -82,7 +99,9 @@
     }
 
     function playVideo(id, title, element) {
-        document.getElementById('youtube-player').src = `https://youtube.com{id}?autoplay=1&rel=0`;
+        // Fixed String Interpolation using Backticks and Dollar Sign
+		// https://www.youtube.com/embed/uh37Kubhd64?si=UEGNM4bPqjSoKGkM
+        document.getElementById('youtube-player').src='https://www.youtube.com/embed/${id}?si=UEGNM4bPqjSoKGkM';
         document.getElementById('player-title').innerText = title;
         
         document.querySelectorAll('.playlist-item').forEach(el => el.classList.remove('active'));
