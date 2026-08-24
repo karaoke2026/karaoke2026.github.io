@@ -101,7 +101,7 @@
     function playVideo(id, title, element) {
         // Fixed String Interpolation using Backticks and Dollar Sign
 		// https://www.youtube.com/embed/uh37Kubhd64?si=UEGNM4bPqjSoKGkM
-        document.getElementById('youtube-player').src='https://www.youtube.com/embed/${id}';
+        document.getElementById('youtube-player').src='https://www.youtube.com/embed/${id}?si=${sID}';
         document.getElementById('player-title').innerText = title;
         
         document.querySelectorAll('.playlist-item').forEach(el => el.classList.remove('active'));
