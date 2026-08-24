@@ -37,11 +37,8 @@
 <div class="container">
     <!-- Left Column -->
     <div class="main-player">
-        <div class="video-wrapper" >
-          <p id="youtube-player">
-		  
-		  </p>
-  
+        <div class="video-wrapper" id="youtube-player" >
+<iframe src='https://www.youtube.com/embed/uh37Kubhd64?si=jy3idI_26ZOIIoQ7' title='YouTube video player' frameborder='0' allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share' referrerpolicy='strict-origin-when-cross-origin' allowfullscreen></iframe> 
 
 	   </div>
         <div class="video-title" id="player-title">Select a video to start singing...</div>
@@ -85,18 +82,29 @@
                 <div class="item-details"><div class="item-title">${video.title}</div></div>
             `;
             
-            item.onclick = () => playVideo(video.videoId, video.title, video.iframecode, item);
+            item.onclick = () => playVideo(video.videoId, video.title, video.cId, item);
             container.appendChild(item);
 
             // Autoplays or pre-loads the very first song on start
-            if(index === 0) playVideo(video.videoId, video.title, video.iframecode, item);
+            if(index === 0) playVideo(video.videoId, video.title, video.cId, item);
         });
     }
 
-    function playVideo(id, title, iframecd, element) {
+    function playVideo(id, title, cid, element) {
         // Fixed String Interpolation using Backticks and Dollar Sign
+
+
+ // document.getElementById('youtube-player').innerHTML = `hellow ${cid}`;
+
  
- document.getElementById('youtube-player').innerHTML = iframecd;
+// document.getElementById('youtube-player').innerHTML = "<iframe width='560' height='315' src=`https://www.youtube.com/embed/$[id]?si=$[cid]` title=`YouTube video player` frameborder=`0` allow=`accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share` referrerpolicy=`strict-origin-when-cross-origin` allowfullscreen></iframe>";
+ 
+
+ 
+ 
+ 
+ 
+ 
         document.getElementById('player-title').innerText = title;
         
         document.querySelectorAll('.playlist-item').forEach(el => el.classList.remove('active'));
